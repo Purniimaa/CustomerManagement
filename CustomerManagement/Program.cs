@@ -3,6 +3,11 @@ using CustomerManagement.Repositories.ICustomerRepositories;
 using CustomerManagement.Repositories.IDbConnection;
 using CustomerManagement.Repositories.ITransactionRepositories;
 using CustomerManagement.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace CustomerManagement
 {
@@ -12,68 +17,113 @@ namespace CustomerManagement
         {
             var builder = WebApplication.CreateBuilder(args);
 
-        
             builder.Services.AddControllers();
-
             builder.Services.AddEndpointsApiExplorer();
 
-
-            builder.Services.AddOpenApiDocument(config =>
+            builder.Services.AddSwaggerGen(options =>
             {
-                config.DocumentName = "customer";
-                config.Title = "Customer API";
-                config.ApiGroupNames = new[] { "customer" };
-                config.PostProcess = document =>
+             
+
+                options.SwaggerDoc("V1", new OpenApiInfo
                 {
-                    document.Info.Version = "v1";
-                    document.Info.Title = "Customer API";
+                    Version = "V1",
+                    Title = "Customer API",
+                    Description = "An API for managing customers",
+                });
+
+                options.SwaggerDoc("V2", new OpenApiInfo
+                {
+                    Version = "V2",
+                    Title = "Transaction API",
+                    Description = "An API for managing transactions",
+                });
+
+                // Add security definition for Bearer token
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter: Bearer {your token}"
+                });
+
+                // Add security requirement
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+            });
+
+            builder.Services.AddAuthentication(opt =>
+            {
+                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured"))),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
                 };
             });
 
-            builder.Services.AddOpenApiDocument(config =>
-            {
-                config.DocumentName = "transactions";
-                config.Title = "Transactions API";
-                config.ApiGroupNames = new[] { "transactions" };
-                config.PostProcess = document =>
-                {
-                    document.Info.Version = "v1";
-                    document.Info.Title = "Transactions API";
-                };
-            });
-
+            builder.Services.AddAuthorization();
             builder.Services.AddScoped<IConnection, DbConnectionServices>();
             builder.Services.AddScoped<ICustomer, CustomerServices>();
             builder.Services.AddScoped<DapperHelper>();
             builder.Services.AddScoped<ITransaction, TransactionServices>();
-          
 
             var app = builder.Build();
+
+            // Configure the HTTP request pipeline
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Customer API V1");
+                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Transaction API V2");
+                    options.RoutePrefix = string.Empty;
+                });
+            }
+            else
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                  
+                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Customer API V1");
+                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Transaction API V2");
+                    options.RoutePrefix = "swagger";
+                });
+            }
+
             app.UseHttpsRedirection();
-
-            app.UseOpenApi(settings =>
-            {
-                settings.Path = "/v1/swagger/{documentName}.json";
-            });
-
-            app.UseSwaggerUi(settings =>
-            {
-                settings.Path = "/v1/swagger/customer.html";
-                settings.DocumentPath = "/v1/swagger/customer.json";
-            });
-
-            app.UseSwaggerUi(settings =>
-            {
-                settings.Path = "/v1/swagger/transactions.html";
-                settings.DocumentPath = "/v1/swagger/transactions.json";
-            });
-
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
             app.Run();
         }
     }
 }
-
-
