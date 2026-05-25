@@ -55,8 +55,34 @@ namespace CustomerManagement.Controllers
         }
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult> CreateCustomer([FromBody] CustomerDTO cus)
+        public async Task<ActionResult> CreateCustomer([FromForm] CustomerDTO cus)
         {
+
+            string ImagePath = "";
+            if (cus.Image != null && cus.Image.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var FileName = Guid.NewGuid().ToString() + "_" + cus.Image.FileName;
+                var filePath = Path.Combine(uploadsFolder, FileName);
+
+                if (System.IO.File.Exists(filePath)) 
+                {
+                    return BadRequest("Image doesnot exist");
+                }
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await cus.Image.CopyToAsync(fileStream);
+                }
+
+                ImagePath = $"/images/{FileName}";
+            }
+            cus.ImagePath = ImagePath;
             var CustId = await _cusServices.CreateCustomer(cus);
 
             if (!CustId.Code.Equals(200))
@@ -91,6 +117,7 @@ namespace CustomerManagement.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GetCustomer>> GetCustomerById(int id)
         {
+
             var getbyid = await _cusServices.GetCustomerById(id);
 
             if (getbyid == null)
@@ -107,30 +134,74 @@ namespace CustomerManagement.Controllers
         }
 
 
-
-        [HttpPut("{id}")]
         [Authorize]
-        public async  Task<ActionResult> UpdateCustomer([FromBody]UpdateCustomer upcus,int id)
-
+        [HttpPut("{id}")]
+     
+        public async Task<ActionResult> UpdateCustomer( int id, [FromForm] UpdateCustomer upcus)
         {
-            //updateCustomer.CID = id;
-            var  updated =await _cusServices.UpdateCustomer(upcus,id);
-            
+            var existing = await _cusServices.GetCustomerById(id);
+            if (existing == null)
+            {
+                return NotFound(new { Message = $"Customer with id {id} not found" });
+            }
+            string? imagePath = null;
+
+            if (upcus.Image != null && upcus.Image.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images");
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var FileName =
+                    Guid.NewGuid().ToString() + "_" + upcus.Image.FileName;
+
+                var filePath = Path.Combine(uploadsFolder,FileName);
+
+                if (System.IO.File.Exists(filePath))
+                {
+                    return BadRequest("Image doesnot exist");
+                }
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await upcus.Image.CopyToAsync(stream);
+                }
+
+                upcus.ImagePath = "/images/" + FileName;
+            }
+            else
+            {
+                imagePath = existing.ImagePath;
+            }
+
+
+             imagePath = upcus.ImagePath;
+
+            var updated = await _cusServices.UpdateCustomer(upcus, id);
 
             if (updated == 0)
-                return BadRequest(new { Message = "Customer cannot be update!" });
-            return Ok(
-                new
+            {
+                return BadRequest(new
                 {
-                    Message = "Customer updated successfully!",
-                   
+                    Message = "Customer cannot be updated!"
                 });
+            }
 
-
+            return Ok(new
+            {
+                Message = "Customer updated successfully!",
+                ImagePath = imagePath
+            });
         }
-
-        [HttpDelete]
         [Authorize]
+        [HttpDelete]
+    
         public async Task<ActionResult<DdResponse>>  DeleteCustomer(int id)
         {
             int deleted = await _cusServices.DeleteCustomer(id);

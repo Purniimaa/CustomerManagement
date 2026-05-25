@@ -43,7 +43,7 @@ namespace CustomerManagement
                 {
                     Name = "Authorization",
                     Type = SecuritySchemeType.Http,
-                    Scheme = "Bearer",
+                    Scheme = "bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
                     Description = "Enter: Bearer {your token}"
@@ -120,6 +120,7 @@ namespace CustomerManagement
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
