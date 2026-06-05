@@ -1,5 +1,6 @@
 ﻿using CustomerManagement.DTO;
 using CustomerManagement.Repositories.ITransactionRepositories;
+using CustomerManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -12,51 +13,21 @@ namespace CustomerManagement.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [ApiExplorerSettings(GroupName = "V2")]
-
-    public class AuthController(IConfiguration _config) : ControllerBase
-    {
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDTO log)
-        {
-            if (log.Username != "admin" || log.Password != "123")
-            {
-                return Unauthorized("Invalid cerenditals");
-            }
-
-            var token = GenerateToken(log.Username);
-            return Ok(new { token });
-        }
-
-        private string GenerateToken(string Username)
-        {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:key"]));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name,Username),
-                new Claim(ClaimTypes.Role,"Admin"),
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds
-                );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-    }
-
-    [Authorize]
-    public class TransactionController(ITransaction _transervices) : ControllerBase
+    [ApiExplorerSettings(GroupName = "V3")]
+    public class TransactionController(ITransaction _transervices, JwtServices _jwtservices) : ControllerBase
 
     {
+        //[HttpPost("login")]
+        //public IActionResult Login([FromBody] LoginDTO log)
+        //{
+        //    if (log.Username != "admin" || log.Password != "123")
+        //    {
+        //        return Unauthorized("Invalid cerenditals");
+        //    }
 
+        //    var token = _jwtservices.GenerateToken(log.Username);
+        //    return Ok(new { token });
+        //}
         [HttpPost("Deposit")]
         public async Task<ActionResult> Deposit([FromQuery] decimal amount, [FromQuery] int id)
         {

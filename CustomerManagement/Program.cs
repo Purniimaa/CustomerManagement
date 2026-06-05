@@ -1,7 +1,10 @@
 using CustomerManagement.Helper;
+using CustomerManagement.Options;
+using CustomerManagement.Repositories.IAuthService;
 using CustomerManagement.Repositories.ICustomerRepositories;
 using CustomerManagement.Repositories.IDbConnection;
 using CustomerManagement.Repositories.ITransactionRepositories;
+using CustomerManagement.Repositories.IUploadService;
 using CustomerManagement.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -22,23 +25,28 @@ namespace CustomerManagement
 
             builder.Services.AddSwaggerGen(options =>
             {
-             
-
                 options.SwaggerDoc("V1", new OpenApiInfo
                 {
                     Version = "V1",
-                    Title = "Customer API",
-                    Description = "An API for managing customers",
+                    Title = "Auth",
+                    
                 });
 
                 options.SwaggerDoc("V2", new OpenApiInfo
                 {
                     Version = "V2",
+                    Title = "Customer API",
+                    Description = "An API for managing customers",
+                });
+
+                options.SwaggerDoc("V3", new OpenApiInfo
+                {
+                    Version = "V3",
                     Title = "Transaction API",
                     Description = "An API for managing transactions",
                 });
 
-                // Add security definition for Bearer token
+               
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -49,7 +57,6 @@ namespace CustomerManagement
                     Description = "Enter: Bearer {your token}"
                 });
 
-                // Add security requirement
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -90,19 +97,24 @@ namespace CustomerManagement
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<IConnection, DbConnectionServices>();
             builder.Services.AddScoped<ICustomer, CustomerServices>();
+            builder.Services.AddScoped<IAuthService, AuthServices>();
+            builder.Services.AddScoped<IUploadService, FileUpload>();
             builder.Services.AddScoped<DapperHelper>();
+            builder.Services.AddScoped<JwtServices>();
+            builder.Services.AddScoped<ShaAlgo>();
             builder.Services.AddScoped<ITransaction, TransactionServices>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline
+           
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(options =>
                 {
-                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Customer API V1");
-                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Transaction API V2");
+                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Auth");
+                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Customer API V2");
+                    options.SwaggerEndpoint("/swagger/V3/swagger.json", "Transaction API V3");
                     options.RoutePrefix = string.Empty;
                 });
             }
@@ -111,9 +123,9 @@ namespace CustomerManagement
                 app.UseSwagger();
                 app.UseSwaggerUI(options =>
                 {
-                  
-                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Customer API V1");
-                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Transaction API V2");
+                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Auth");
+                    options.SwaggerEndpoint("/swagger/V2/swagger.json", "Customer API V2");
+                    options.SwaggerEndpoint("/swagger/V3/swagger.json", "Transaction API V3");
                     options.RoutePrefix = "swagger";
                 });
             }

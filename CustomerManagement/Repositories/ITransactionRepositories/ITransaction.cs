@@ -4,7 +4,7 @@ namespace CustomerManagement.Repositories.ITransactionRepositories
 {
     public interface ITransaction
     {
-        Task<int> Login(LoginDTO login);
+        //Task<int> Login(LoginDTO login);
         Task<int> Deposit(decimal amount, int id);
 
         Task<int> Withdraw(decimal amount, int id);

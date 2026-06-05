@@ -11,7 +11,7 @@ namespace CustomerManagement.Repositories.ICustomerRepositories
         Task<DdResponse> CreateCustomer(CustomerDTO cus);
         Task<List<GetCustomer>> GetallCustomer();
         Task<GetCustomer> GetCustomerById(int id);
-        Task<int> UpdateCustomer(UpdateCustomer upcus, int id);
+        Task<int> UpdateCustomer(CustomerDTO upcus, int id);
         Task<int> DeleteCustomer(int id);
 
 

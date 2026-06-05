@@ -1,6 +1,9 @@
 using CustomerManagement.Common;
 using CustomerManagement.DTO;
+using CustomerManagement.Model;
+using CustomerManagement.Repositories;
 using CustomerManagement.Repositories.ICustomerRepositories;
+using CustomerManagement.Repositories.IUploadService;
 using CustomerManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,86 +18,51 @@ namespace CustomerManagement.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [ApiExplorerSettings(GroupName = "V1")]
+    [ApiExplorerSettings(GroupName = "V2")]
 
-    public class CustomerController(ICustomer _cusServices,IConfiguration _config) : ControllerBase
+    public class CustomerController(ICustomer _cusServices,IConfiguration _config, JwtServices _jwtservices,IUploadService _imservice) : ControllerBase
     {
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDTO log)
-        {
-            if (log.Username != "admin" || log.Password != "123")
-            {
-                return Unauthorized("Invalid cerenditals");
-            }
+        //[HttpPost("login")]
+        //public IActionResult Login([FromBody] LoginDTO log)
+        //{
+        //    if (log.Username != "admin" || log.Password != "123")
+        //    {
+        //        return Unauthorized("Invalid cerenditals");
+        //    }
 
-            var token = GenerateToken(log.Username);
-            return Ok(new { token });
-        }
+        //    var token = _jwtservices.GenerateToken(log.Username);
+        //    return Ok(new { token });
+        
 
-        private string GenerateToken(string Username)
-        {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:key"]));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name,Username),
-                new Claim(ClaimTypes.Role,"Admin"),
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds
-                );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
         [Authorize]
         [HttpPost]
         public async Task<ActionResult> CreateCustomer([FromForm] CustomerDTO cus)
         {
+          
+            var uploadResult = await _imservice.UploadFile(cus.ImageFile);
 
-            string ImagePath = "";
-            if (cus.Image != null && cus.Image.Length > 0)
-            {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
+            cus.ImagePath = uploadResult.imagePath;
+            cus.FileName = uploadResult.fileName;
+            cus.FileType = FileTypes.Image;
 
-                var FileName = Guid.NewGuid().ToString() + "_" + cus.Image.FileName;
-                var filePath = Path.Combine(uploadsFolder, FileName);
-
-                if (System.IO.File.Exists(filePath)) 
-                {
-                    return BadRequest("Image doesnot exist");
-                }
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await cus.Image.CopyToAsync(fileStream);
-                }
-
-                ImagePath = $"/images/{FileName}";
-            }
-            cus.ImagePath = ImagePath;
             var CustId = await _cusServices.CreateCustomer(cus);
 
             if (!CustId.Code.Equals(200))
-                return BadRequest(new {Message = CustId.Message });
-            return Ok(
-                new
+            {
+                return BadRequest(new
                 {
-                    Message = "Customer created successfully!",
-                    Code = CustId.Code,
+                    Message = CustId.Message
                 });
+            }
 
+            return Ok(new
+            {
+                Message = "Customer created successfully!",
+                Code = CustId.Code,
+                ImagePath = uploadResult.imagePath
+            });
         }
+
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<GetCustomer>>> GetallCustomer()
@@ -136,53 +104,17 @@ namespace CustomerManagement.Controllers
 
         [Authorize]
         [HttpPut("{id}")]
-     
-        public async Task<ActionResult> UpdateCustomer( int id, [FromForm] UpdateCustomer upcus)
+
+        public async Task<ActionResult> UpdateCustomer(int id, [FromForm] CustomerDTO upcus)
         {
-            var existing = await _cusServices.GetCustomerById(id);
-            if (existing == null)
+            if (upcus.ImageFile != null)
             {
-                return NotFound(new { Message = $"Customer with id {id} not found" });
+                var uploadResult = await _imservice.UploadFile(upcus.ImageFile);
+
+                upcus.ImagePath = uploadResult.imagePath;
+                upcus.FileName = uploadResult.fileName;
+                upcus.FileType = FileTypes.Image;
             }
-            string? imagePath = null;
-
-            if (upcus.Image != null && upcus.Image.Length > 0)
-            {
-                var uploadsFolder = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "images");
-
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var FileName =
-                    Guid.NewGuid().ToString() + "_" + upcus.Image.FileName;
-
-                var filePath = Path.Combine(uploadsFolder,FileName);
-
-                if (System.IO.File.Exists(filePath))
-                {
-                    return BadRequest("Image doesnot exist");
-                }
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await upcus.Image.CopyToAsync(stream);
-                }
-
-                upcus.ImagePath = "/images/" + FileName;
-            }
-            else
-            {
-                imagePath = existing.ImagePath;
-            }
-
-
-             imagePath = upcus.ImagePath;
-
             var updated = await _cusServices.UpdateCustomer(upcus, id);
 
             if (updated == 0)
@@ -196,12 +128,12 @@ namespace CustomerManagement.Controllers
             return Ok(new
             {
                 Message = "Customer updated successfully!",
-                ImagePath = imagePath
+                
             });
         }
         [Authorize]
         [HttpDelete]
-    
+
         public async Task<ActionResult<DdResponse>>  DeleteCustomer(int id)
         {
             int deleted = await _cusServices.DeleteCustomer(id);
