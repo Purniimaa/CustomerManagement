@@ -1,4 +1,6 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using CustomerManagement.DTO;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -13,27 +15,37 @@ namespace CustomerManagement.Services
             _config = config;
         }
 
-        public string GenerateToken(string Username)
+        public async Task<LoginResponse> GenerateToken(string Username,int CustomerId)
         {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:key"]));
+            var issuer = _config["Jwt:Issuer"];
+            var audience = _config["Jwt:Audience"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var tokenValidityMins = _config.GetValue<int>("Jwt:TokenValidityMins");
+            var tokenExpiryTimeStamp = DateTime.UtcNow.AddMinutes(tokenValidityMins);
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken (issuer,
+               audience,
+               new List<Claim>
+               {
+                  new Claim(ClaimTypes.Name, Username),
+                  new Claim("CustomerId", CustomerId.ToString())
+               },
+               expires: tokenExpiryTimeStamp,
+               signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+              );
 
-            var claims = new[]  
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return new LoginResponse
             {
-                new Claim(ClaimTypes.Name,Username),
-                new Claim(ClaimTypes.Role,"Admin"),
+                Username = Username,
+                AccessToken = accessToken,
+                ExpiresIn = (int)(tokenExpiryTimeStamp - DateTime.UtcNow).TotalSeconds
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds
-                );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+
+
         }
     }
     }

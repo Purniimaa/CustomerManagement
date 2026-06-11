@@ -8,5 +8,7 @@
         public int TokenExpiry { get; set; }
 
         public string Key { get; set; }
+
+      
     }
 }
