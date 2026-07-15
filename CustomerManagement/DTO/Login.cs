@@ -6,7 +6,6 @@
 
         public string Password { get; set; } = string.Empty;
 
-        public int CustomerId { get; set; }
 
 
 

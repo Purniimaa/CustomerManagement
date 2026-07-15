@@ -1,7 +1,10 @@
 ﻿using CustomerManagement.DTO;
 using CustomerManagement.Repositories.IAuthService;
+using CustomerManagement.Services;
+using CustomerManagement.Model;
 using System;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CustomerManagement.Controllers
 {
@@ -10,18 +13,18 @@ namespace CustomerManagement.Controllers
     [Route("[controller]")]
     [ApiExplorerSettings(GroupName = "V1")]
 
-    public class AuthController(IAuthService _authService) : ControllerBase
+    public class AuthController(IAuthService _authService, JwtServices _jwtService) : ControllerBase
     {
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] Register log)
-       {
+        {
             if (string.IsNullOrWhiteSpace(log.Password) || string.IsNullOrWhiteSpace(log.ConfirmPassword))
             {
                 return BadRequest("Password and ConfirmPassword are required.");
             }
 
-            if (!string.Equals(log.Password, log.ConfirmPassword, StringComparison.Ordinal))
+            if (!string.Equals(log.Password, log.ConfirmPassword))
             {
                 return BadRequest("Passwords do not match.");
             }
@@ -34,7 +37,7 @@ namespace CustomerManagement.Controllers
                     Message = "Registration successful",
                     CustomerId = result.CustomerId,
                     Username = result.Username,
-                    
+
                 });
             }
             else
@@ -42,15 +45,16 @@ namespace CustomerManagement.Controllers
                 return BadRequest("Registration failed");
             }
 
-           
+
         }
 
-   
+
         [HttpPost("Login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] Login log)
         {
             try
             {
+               
                 var result = await _authService.Login(log);
 
                 if (result == null)
@@ -84,7 +88,21 @@ namespace CustomerManagement.Controllers
                 });
             }
         }
+        [AllowAnonymous]
+        [HttpPost("RefreshToken")]
+        public async Task<ActionResult<LoginResponse>> RefreshToken([FromBody] RefreshRequestModel request)
+        {
+            var result = await _jwtService.ValidateRefreshToken(request.Token);
+            if (result == null)
+            {
+                return Unauthorized(new
+                {
+                    Message = "Invalid or expired refresh token"
+                });
+            }
 
+            return result is not null ? result :Unauthorized();
+        }
     }
-    }
+}
 

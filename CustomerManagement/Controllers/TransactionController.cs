@@ -14,20 +14,11 @@ namespace CustomerManagement.Controllers
     [ApiController]
     [Route("[controller]")]
     [ApiExplorerSettings(GroupName = "V3")]
+    [Authorize]
     public class TransactionController(ITransaction _transervices, JwtServices _jwtservices) : ControllerBase
 
     {
-        //[HttpPost("login")]
-        //public IActionResult Login([FromBody] LoginDTO log)
-        //{
-        //    if (log.Username != "admin" || log.Password != "123")
-        //    {
-        //        return Unauthorized("Invalid cerenditals");
-        //    }
-
-        //    var token = _jwtservices.GenerateToken(log.Username);
-        //    return Ok(new { token });
-        //}
+        
         [HttpPost("Deposit")]
         public async Task<ActionResult> Deposit([FromQuery] decimal amount, [FromQuery] int id)
         {

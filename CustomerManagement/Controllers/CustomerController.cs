@@ -19,22 +19,9 @@ namespace CustomerManagement.Controllers
     [ApiController]
     [Route("[controller]")]
     [ApiExplorerSettings(GroupName = "V2")]
-
-    public class CustomerController(ICustomer _cusServices,IConfiguration _config, JwtServices _jwtservices,IUploadService _imservice) : ControllerBase
+    [Authorize]
+    public class CustomerController(ICustomer _cusServices,IUploadService _imservice) : ControllerBase
     {
-        //[HttpPost("login")]
-        //public IActionResult Login([FromBody] LoginDTO log)
-        //{
-        //    if (log.Username != "admin" || log.Password != "123")
-        //    {
-        //        return Unauthorized("Invalid cerenditals");
-        //    }
-
-        //    var token = _jwtservices.GenerateToken(log.Username);
-        //    return Ok(new { token });
-        
-
-        [Authorize]
         [HttpPost]
         public async Task<ActionResult> CreateCustomer([FromForm] CustomerDTO cus)
         {
@@ -63,7 +50,7 @@ namespace CustomerManagement.Controllers
             });
         }
 
-        [Authorize]
+       
         [HttpGet]
         public async Task<ActionResult<List<GetCustomer>>> GetallCustomer()
         {
@@ -81,7 +68,7 @@ namespace CustomerManagement.Controllers
             return Ok(new { customers});
         }
 
-        [Authorize]
+       
         [HttpGet("{id}")]
         public async Task<ActionResult<GetCustomer>> GetCustomerById(int id)
         {
@@ -102,7 +89,6 @@ namespace CustomerManagement.Controllers
         }
 
 
-        [Authorize]
         [HttpPut("{id}")]
 
         public async Task<ActionResult> UpdateCustomer(int id, [FromForm] CustomerDTO upcus)
@@ -131,7 +117,7 @@ namespace CustomerManagement.Controllers
                 
             });
         }
-        [Authorize]
+ 
         [HttpDelete]
 
         public async Task<ActionResult<DdResponse>>  DeleteCustomer(int id)

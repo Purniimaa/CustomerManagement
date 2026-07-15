@@ -26,6 +26,7 @@ namespace CustomerManagement.Options
         {
             string hashpassd = HashPassword(inputpassword);
             return hashpassd == storehash;
+
         }
     }
 }

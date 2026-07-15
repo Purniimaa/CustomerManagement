@@ -1,6 +1,7 @@
 using CustomerManagement.Helper;
 using CustomerManagement.Options;
 using CustomerManagement.Repositories.IAuthService;
+using CustomerManagement.Repositories.IAuthUser;
 using CustomerManagement.Repositories.ICustomerRepositories;
 using CustomerManagement.Repositories.IDbConnection;
 using CustomerManagement.Repositories.ITransactionRepositories;
@@ -90,7 +91,8 @@ namespace CustomerManagement
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true
+                    ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
@@ -102,7 +104,9 @@ namespace CustomerManagement
             builder.Services.AddScoped<DapperHelper>();
             builder.Services.AddScoped<JwtServices>();
             builder.Services.AddScoped<ShaAlgo>();
-            builder.Services.AddScoped<ITransaction, TransactionServices>();
+            builder.Services.AddScoped<IAuthRepository, AuthUserRepo>();
+            builder.Services.AddScoped<ITransaction,TransactionServices>();
+           
 
             var app = builder.Build();
 
