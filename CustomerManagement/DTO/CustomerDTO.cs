@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using CustomerManagement.Model;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CustomerManagement.DTO
 {
@@ -10,8 +11,19 @@ namespace CustomerManagement.DTO
         public string Phone { get; set; }
         public string Address { get; set; }
         public decimal Balance { get; set; }
+        public IFormFile ImageFile { get; set; }
+
+        public string FileName { get; set; }
+        public FileTypes FileType { get; set; }
+
+        public string ImagePath { get; set; }
+   
 
 
+
+
+
+        
     }
 
  

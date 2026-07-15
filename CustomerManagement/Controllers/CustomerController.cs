@@ -1,6 +1,9 @@
 using CustomerManagement.Common;
 using CustomerManagement.DTO;
+using CustomerManagement.Model;
+using CustomerManagement.Repositories;
 using CustomerManagement.Repositories.ICustomerRepositories;
+using CustomerManagement.Repositories.IUploadService;
 using CustomerManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,61 +18,39 @@ namespace CustomerManagement.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [ApiExplorerSettings(GroupName = "V1")]
-
-    public class CustomerController(ICustomer _cusServices,IConfiguration _config) : ControllerBase
+    [ApiExplorerSettings(GroupName = "V2")]
+    [Authorize]
+    public class CustomerController(ICustomer _cusServices,IUploadService _imservice) : ControllerBase
     {
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDTO log)
-        {
-            if (log.Username != "admin" || log.Password != "123")
-            {
-                return Unauthorized("Invalid cerenditals");
-            }
-
-            var token = GenerateToken(log.Username);
-            return Ok(new { token });
-        }
-
-        private string GenerateToken(string Username)
-        {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:key"]));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name,Username),
-                new Claim(ClaimTypes.Role,"Admin"),
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds
-                );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-        [Authorize]
         [HttpPost]
-        public async Task<ActionResult> CreateCustomer([FromBody] CustomerDTO cus)
+        public async Task<ActionResult> CreateCustomer([FromForm] CustomerDTO cus)
         {
+          
+            var uploadResult = await _imservice.UploadFile(cus.ImageFile);
+
+            cus.ImagePath = uploadResult.imagePath;
+            cus.FileName = uploadResult.fileName;
+            cus.FileType = FileTypes.Image;
+
             var CustId = await _cusServices.CreateCustomer(cus);
 
             if (!CustId.Code.Equals(200))
-                return BadRequest(new {Message = CustId.Message });
-            return Ok(
-                new
+            {
+                return BadRequest(new
                 {
-                    Message = "Customer created successfully!",
-                    Code = CustId.Code,
+                    Message = CustId.Message
                 });
+            }
 
+            return Ok(new
+            {
+                Message = "Customer created successfully!",
+                Code = CustId.Code,
+                ImagePath = uploadResult.imagePath
+            });
         }
-        [Authorize]
+
+       
         [HttpGet]
         public async Task<ActionResult<List<GetCustomer>>> GetallCustomer()
         {
@@ -87,10 +68,11 @@ namespace CustomerManagement.Controllers
             return Ok(new { customers});
         }
 
-        [Authorize]
+       
         [HttpGet("{id}")]
         public async Task<ActionResult<GetCustomer>> GetCustomerById(int id)
         {
+
             var getbyid = await _cusServices.GetCustomerById(id);
 
             if (getbyid == null)
@@ -107,30 +89,37 @@ namespace CustomerManagement.Controllers
         }
 
 
-
         [HttpPut("{id}")]
-        [Authorize]
-        public async  Task<ActionResult> UpdateCustomer([FromBody]UpdateCustomer upcus,int id)
 
+        public async Task<ActionResult> UpdateCustomer(int id, [FromForm] CustomerDTO upcus)
         {
-            //updateCustomer.CID = id;
-            var  updated =await _cusServices.UpdateCustomer(upcus,id);
-            
+            if (upcus.ImageFile != null)
+            {
+                var uploadResult = await _imservice.UploadFile(upcus.ImageFile);
+
+                upcus.ImagePath = uploadResult.imagePath;
+                upcus.FileName = uploadResult.fileName;
+                upcus.FileType = FileTypes.Image;
+            }
+            var updated = await _cusServices.UpdateCustomer(upcus, id);
 
             if (updated == 0)
-                return BadRequest(new { Message = "Customer cannot be update!" });
-            return Ok(
-                new
+            {
+                return BadRequest(new
                 {
-                    Message = "Customer updated successfully!",
-                   
+                    Message = "Customer cannot be updated!"
                 });
+            }
 
-
+            return Ok(new
+            {
+                Message = "Customer updated successfully!",
+                
+            });
         }
-
+ 
         [HttpDelete]
-        [Authorize]
+
         public async Task<ActionResult<DdResponse>>  DeleteCustomer(int id)
         {
             int deleted = await _cusServices.DeleteCustomer(id);

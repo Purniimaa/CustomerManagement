@@ -27,6 +27,10 @@ namespace CustomerManagement.Services
                 parameters.Add("@Phone", cus.Phone);
                 parameters.Add("@Address", cus.Address);
                 parameters.Add("@Balance", cus.Balance);
+                parameters.Add("@FileName", cus.FileName);
+                parameters.Add("@FileType", cus.FileType);
+                parameters.Add("@ImagePath", cus.ImagePath);
+
 
                 return await helper.QuerySingleAsync<DdResponse>(insertCustomer, parameters);
 
@@ -55,6 +59,10 @@ namespace CustomerManagement.Services
                 param.Add("Address", null);
                 param.Add("Balance", null);
                 param.Add("CustomerId", null);
+                param.Add("@FileName", null);
+                param.Add("@FileType", null);
+                param.Add("@ImagePath", null);
+               
 
 
                 return await helper.QueryAsync<GetCustomer>(getcustomer, param);
@@ -94,18 +102,24 @@ namespace CustomerManagement.Services
         }
 
 
-        public async Task<int> UpdateCustomer(UpdateCustomer upcus,int id)
+        public async Task<int> UpdateCustomer(CustomerDTO upcus,int id)
         {
             try
             {
                 string update = "usp_customer";
                 DynamicParameters param = new DynamicParameters();
                 param.Add("@Flag", "u");
-                param.Add("@Customerid",id);
+                param.Add("@CustomerId", id);
                 param.Add("@Name",upcus.Name);
                 param.Add("@Email", upcus.Email);
                 param.Add("@Phone", upcus.Phone);
                 param.Add("@Address", upcus.Address);
+                param.Add("@Balance", upcus.Balance);
+                param.Add("@FileName", upcus.FileName);
+                param.Add("@FileType", upcus.FileType);
+                param.Add("@ImagePath", upcus.ImagePath);
+
+
 
                 int rowsaffected = await helper.ExecuteAsync(update, param);
                 return rowsaffected;

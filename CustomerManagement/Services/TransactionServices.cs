@@ -8,36 +8,15 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Numerics;
 
-
-
 namespace CustomerManagement.Services
 {
     public class TransactionServices(DapperHelper helper) : ITransaction
     {
-
-        public async Task<int> Login(LoginDTO login)
-        {
-            try
-            {
-                string login_cus = "login_customer";
-                DynamicParameters param = new DynamicParameters();
-                param.Add("Username", null);
-                param.Add("Password", null);
-
-                return await helper.ExecuteAsync(login_cus, param);
-
-            }
-            catch(SqlException ex)
-            {
-                throw new Exception("Login failed",ex);
-            }
-        }
         public async Task<int> Deposit(decimal amount,int id)
 
         {
             try
             {
-
                 string deposit = "usp_transactions";
                 DynamicParameters param = new DynamicParameters();
                 param.Add("Flag", "d");
@@ -57,16 +36,12 @@ namespace CustomerManagement.Services
                 throw new Exception($"Error: {e.Message}", e);
 
             }
-
-
-
         }
 
         public async Task<int> Withdraw(decimal amount,int id)
         {
             try
             {
-
                 string deposit = "usp_transactions";
                 DynamicParameters param = new DynamicParameters();
                 param.Add("Flag", "w");
