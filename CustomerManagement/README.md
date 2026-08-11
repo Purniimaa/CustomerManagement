@@ -25,6 +25,21 @@ The system includes:
 
 ---
 
+## Key Features
+
+-  **JWT Authentication** – User login, access tokens, and refresh tokens.
+- **Customer Management** – Complete CRUD operations for customer records.
+-  **Deposit Management** – Process and record customer deposits.
+- **Withdrawal Management** – Process withdrawals with validation and business rules.
+-  **Transaction Management** – View transaction history and individual transaction details.
+-  **Transaction Reports** – Calculate total deposits, total withdrawals, and customer-specific transaction details.
+-  **Dapper Data Access** – Lightweight and efficient database access using Dapper.
+-  **Stored Procedures** – Database operations are handled through SQL Server stored procedures.
+-  **Layered Architecture** – Controllers, Services, Repositories, and Database layers are separated for maintainability.
+-  **File Upload** – Supports file upload functionality through a dedicated upload service.
+-  **Swagger** – Interactive API documentation and testing.
+-  **API Authorization** – Protected endpoints secured using JWT Bearer authentication.
+
 ## Technologies Used
 
 - **C#**
