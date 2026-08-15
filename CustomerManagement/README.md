@@ -52,3 +52,6 @@ The system includes:
 - **Visual Studio**
 
 ---
+
+## Architecture Overview
+![Architecture Diagram](images/architecture.png)
