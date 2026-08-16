@@ -25,8 +25,6 @@ The system includes:
 - **Customer Management** – Complete CRUD operations for customer records.
 -  **Deposit Management** – Process and record customer deposits.
 - **Withdrawal Management** – Process withdrawals with validation and business rules.
--  **Transaction Management** – View transaction history and individual transaction details.
--  **Transaction Reports** – Calculate total deposits, total withdrawals, and customer-specific transaction details.
 -  **Dapper Data Access** – Lightweight and efficient database access using Dapper.
 -  **Stored Procedures** – Database operations are handled through SQL Server stored procedures.
 -  **Layered Architecture** – Controllers, Services, Repositories, and Database layers are separated for maintainability.
@@ -132,8 +130,8 @@ The database mainly manages the following areas:
 |---|---|
 | `usp_Auth` | Handles user registration and login |
 | `usp_customer` | Handles customer create, read, update, and delete operations |
-| `usp_transactions` | Handles deposits, withdrawals, transaction retrieval, and transaction summaries |
-| `SaveRefreshToken` | Handles refresh token insertion, retrieval, and revocation |
+| `usp_transactions` | Handles deposits, withdrawals|
+| `SaveRefreshToken` | Handles refresh token insertion,revoked |
 
 ### Flag-Based Operations
 
@@ -219,8 +217,7 @@ The Customer module provides **CRUD (Create, Read, Update, Delete)** operations 
 
 ### Transaction Management
 
-The Transaction module manages customer financial activities, including deposits, withdrawals, transaction history, and transaction summaries.
-
+The Transaction module manages customer financial activities, including deposits, withdrawals.
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/Transaction/Deposit` | Records a deposit for a customer |
@@ -284,10 +281,10 @@ Open Swagger:
 /swagger
 ```
 ## Screenshots
-[!Authentication](files/Auth.png)
-[!Bearer Token](files/Token.png)
-[!Customer Management](files/Customer.png)
-[!Transaction Management](files/Transaction.png)
+![Authentication](files/Auth.png)
+![Bearer Token](files/Token.png)
+![Customer Management](files/Customer.png)
+![Transaction Management](files/Transaction.png)
 ## Security
 The application uses **JWT (JSON Web Token) Authentication** to secure protected APIs and ensure that only authenticated users can access authorized resources.
 
