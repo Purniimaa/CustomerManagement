@@ -44,7 +44,7 @@ The system includes:
 - **Swagger**
 - **Visual Studio**
 ## Architecture
-![Architecture Diagram](images/architecture.png)
+![Architecture Diagram](files/a.png)
 ## Project Structure
 
 ```
@@ -193,7 +193,8 @@ The database design separates **authentication, customer management, transaction
 The **Customer Management API** provides RESTful endpoints for managing users, customers, and financial transactions. The API is organized into separate modules to keep the functionality structured and easy to maintain.
 
 Authentication is handled using **JWT (JSON Web Token)**. After successful login, an access token is generated for accessing protected endpoints. A refresh token can be used to generate a new access token when the current token expires.
-
+## Flowchart
+![Flowchart](files/flow.png)
 ### Authentication
 
 The Authentication module handles user registration, login, and token renewal.
@@ -283,6 +284,10 @@ Open Swagger:
 /swagger
 ```
 ## Screenshots
+[!Authentication](files/auth.png)
+[!Bearer Token](files/token.png)
+[!Customer Management](files/customer.png)
+[!Transaction Management](files/transaction.png)
 ## Security
 The application uses **JWT (JSON Web Token) Authentication** to secure protected APIs and ensure that only authenticated users can access authorized resources.
 
